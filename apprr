@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# PROVIDE: apprr
+# REQUIRE: LOGIN nginx
+# KEYWORD: shutdown
+
+# apprr_enable="yes"
+
+. /etc/rc.subr
+
+name="apprr"
+rcvar=apprr_enable
+
+apprr_pid=/var/run/apprr.pid
+
+# Undefined from -KILL to blank because stopping failed to kill
+# child processes
+# 
+# OLD Comment: Can also be -9 etc. -HUP usually causes sadness.
+sig_stop=
+
+start_cmd=apprr_start
+stop_cmd=apprr_kill
+#restart_cmd=apprr_restart    # unimplemented
+
+load_rc_config ${name}
+
+# Name of interpreter to invoke
+interp="node"
+# Command path must always be explicit.
+cmd="/usr/local/www/serverroot/html/Test/apprr.js"
+# Contain arguments in quotes, use ' and \"
+cmd_args=""
+
+apprr_start()
+{
+    # See daemon(8) for more details.
+    #daemon -f -p $apprr_pid $interp $cmd $cmd_args
+    # This is another favorite method. Select only one of these.
+    app_root="/usr/local/www/serverroot"
+    user="user"
+    cd $app_root
+    daemon -P $apprr_pid -f -r -u $user $interp $cmd $cmd_args
+    if [ $? -ne 0 ]; then
+        echo "Error starting apprr."
+        exit 1
+    fi
+    echo "Starting apprr"
+}
+
+apprr_kill()
+{
+    echo "Stopping apprr."
+    kill $sig_stop `cat $apprr_pid`
+}
+
+run_rc_command "$1"
